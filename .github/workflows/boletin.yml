@@ -1,0 +1,28 @@
+name: Boletín do estudantado
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"  # 09:00 Madrid en horario de verano (CEST, UTC+2)
+    - cron: "0 8 * * 1"  # 09:00 Madrid en horario de invierno (CET, UTC+1)
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Fecha a probar (YYYY-MM-DD). Vacío = hoy"
+        required: false
+        default: ""
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar boletín
+        run: python3 bot.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CRON: ${{ github.event.schedule }}
+          DATE: ${{ inputs.date }}
+          # En pruebas manuales no esperar; en la ejecución del lunes, hasta 5 h
+          MAX_WAIT_HOURS: ${{ github.event_name == 'schedule' && '5' || '0' }}
